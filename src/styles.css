@@ -46,3 +46,53 @@ h1{font-size:26px;line-height:1.35;margin:8px 0 8px;letter-spacing:-.5px}
 .confetti{font-size:48px;animation:pop .6s}
 .note{font-size:13px;color:var(--sub);line-height:1.5;text-align:center;margin-top:12px}
 a.link{color:var(--main);font-weight:600}
+
+/* ── 앱 상세 화면 스타일 (new1 affiliate_benefits_screen 기준) ── */
+:root{--primary:#4F46E5;--soft:#EEF0FF;--border:#C7CCFF}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;background:#F7F8FB}
+.page:has(.detail){padding:0 0 150px}
+.d-hero{width:100%;aspect-ratio:3/2;object-fit:cover;display:block;border-radius:0 0 20px 20px;background:#E5E7EB;margin:0}
+.d-hero.empty{display:flex;align-items:center;justify-content:center;color:#9CA3AF;background:#F3F4F6}
+.d-body{padding:14px 18px 0}
+.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#F4F5F8;color:#4B5563;font-size:11px;font-weight:800;margin-bottom:8px}
+.d-name{font-size:22px;font-weight:800;letter-spacing:-.6px;color:#191F28;margin:0}
+.d-meta{margin:3px 0 0;font-size:12.5px;font-weight:500;color:#8B95A1}
+.qa{display:flex;gap:7px;margin:14px 0}
+.qa a{flex:1;text-align:center;padding:11px 0;border:1px solid #E9EBF0;border-radius:12px;color:#4B5563;font-size:12.5px;font-weight:700;text-decoration:none;min-height:44px;display:flex;align-items:center;justify-content:center}
+.tabs{display:flex;border-bottom:1px solid #E9EBF0;margin:4px 0 16px}
+.tabs button{flex:1;background:none;min-height:44px;font-size:14px;font-weight:700;color:#8B95A1;border-bottom:2px solid transparent}
+.tabs button.on{color:#191F28;border-bottom-color:#191F28}
+.stamp-card{background:#fff;border-radius:20px;box-shadow:0 1px 2px rgba(25,31,40,.05),0 6px 16px rgba(25,31,40,.08);overflow:hidden;margin-bottom:16px}
+.sc-top{padding:18px 18px 16px}
+.sc-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;letter-spacing:-.4px;color:#333D4B}
+.sc-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}
+.sc-count b{font-size:34px;font-weight:800;letter-spacing:-.9px;color:var(--primary);line-height:1.1}
+.sc-count span{font-size:24px;font-weight:800;letter-spacing:-.7px;color:#191F28}
+.sc-sub{margin:5px 0 0;font-size:13.5px;font-weight:500;color:#8B95A1;line-height:1.4}
+.sc-btn{flex:none;display:flex;align-items:center;gap:3px;min-height:44px;padding:0 14px;border-radius:12px;background:#fff;border:1.4px solid var(--border);color:var(--primary);font-size:13.5px;font-weight:800;letter-spacing:-.3px}
+.sc-btn:disabled{background:#F4F5F8;border-color:#E5E7EB;color:#9CA3AF}
+.dashed{border-top:1.5px dashed #E5E7EB}
+.sc-grid{padding:16px 18px}
+.sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sgrid img{width:100%;aspect-ratio:1;object-fit:contain;display:block}
+.sgrid img.pend{opacity:.55;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.9}}
+.sc-note{display:flex;align-items:center;gap:8px;background:#F7F8FB;padding:11px 18px;font-size:12px;font-weight:500;color:#6B7280}
+.reward-list{background:#fff;border-radius:20px;border:1px solid #E5E7EB;padding:14px 16px;margin-bottom:16px}
+.reward-list h2{font-size:15px;font-weight:700;color:#1F2937;margin:0 0 6px}
+.rw{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F2F3F7}
+.rw:last-child{border-bottom:0}
+.rw-n{flex:none;min-width:48px;text-align:center;padding:4px 8px;border-radius:999px;background:var(--soft);color:var(--primary);font-size:12.5px;font-weight:800}
+.rw-t{flex:1;font-size:14px;font-weight:600;color:#191F28;display:flex;flex-direction:column}
+.rw-t small{font-size:12px;font-weight:500;color:#8B95A1;margin-top:2px}
+.rw.done .rw-n{background:var(--primary);color:#fff}
+.rw-ok{font-size:12px;font-weight:800;color:var(--primary)}
+.done-banner{background:var(--soft);color:#312E81;font-weight:700;border-radius:14px;padding:13px 16px;margin-bottom:12px;font-size:14px;animation:fade .3s}
+.irow{display:flex;gap:14px;font-size:13px}.irow span{width:40px;color:#8B95A1;font-weight:600}.irow b{font-weight:500;color:#4B5563;line-height:1.45}
+.cta-msg{margin:0 0 8px;text-align:center;font-size:13.5px;font-weight:600;color:#4B5563}
+.chips{display:flex;gap:8px}
+.chips button{flex:1;min-height:44px;border-radius:12px;background:#F4F5F8;color:#4B5563;font-weight:700;font-size:15px}
+.chips button.on{background:var(--soft);color:var(--primary);box-shadow:inset 0 0 0 1.6px var(--primary)}
+.pad button{min-height:48px}
+.pin i{width:46px;height:54px}
