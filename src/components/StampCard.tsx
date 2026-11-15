@@ -43,14 +43,15 @@ export function StampCard({ name, total, current, pending, rewards, notes, daily
             <div className="sc-count"><b>{Math.min(shown, total)}</b><span> / {total}</span></div>
             <p className="sc-sub">{subtitle}</p>
           </div>
-          <button className="sc-btn" onClick={onAdd} disabled={busy || pending > 0}>
-            {busy ? '적립 중…' : '적립하기'}<span aria-hidden>›</span>
-          </button>
         </div>
       </div>
       <div className="dashed" />
       <div className="sc-grid"><StampGrid total={total} current={current} pending={pending}
-        rewardSteps={new Set(next ? [next.stamps ?? 0] : [])} /></div>
+        rewardSteps={new Set(next ? [next.stamps ?? 0] : [])} />
+        <button className="btn sc-add" onClick={onAdd} disabled={busy || pending > 0}>
+          {busy ? '적립 중…' : pending > 0 ? '로그인하면 적립이 완료돼요' : '스탬프 적립하기'}
+        </button>
+      </div>
       <div className="sc-note">
         <img src="/stamp/stamp_info.png" width={20} height={20} alt="" />
         <span>{notes?.trim() ? notes : `${dailyLabel} 적립 · 마지막 칸이 리워드예요`}</span>

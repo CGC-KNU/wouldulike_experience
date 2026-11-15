@@ -30,7 +30,6 @@ export default function Entry() {
   const [current, setCurrent] = useState(0);
   const [pend, setPend] = useState<Pending | null>(() => { const p = pendingStore.get(); return p && p.id === id ? p : null; });
   const [sheet, setSheet] = useState<'pin' | 'install' | null>(null);
-  const [tab, setTab] = useState<'benefit' | 'info'>('benefit');
   const [busy, setBusy] = useState(false);
   const [pinErr, setPinErr] = useState('');
   const [shake, setShake] = useState(false);
@@ -108,34 +107,21 @@ export default function Entry() {
           {enabled && <span className="pill">스탬프 {Math.min(shownCount, total)}/{total}</span>}
           <h1 className="d-name">{info.name}</h1>
           {info.address && <p className="d-meta">{info.address}</p>}
-          <div className="qa">
-            {info.address && <a href={`https://map.kakao.com/link/search/${encodeURIComponent(info.address)}`} target="_blank" rel="noreferrer">길찾기</a>}
-            <a href={appLink(id)}>앱에서 열기</a>
-          </div>
-
-          <div className="tabs" role="tablist">
-            <button role="tab" aria-selected={tab === 'benefit'} className={tab === 'benefit' ? 'on' : ''} onClick={() => setTab('benefit')}>혜택</button>
-            <button role="tab" aria-selected={tab === 'info'} className={tab === 'info' ? 'on' : ''} onClick={() => setTab('info')}>매장 정보</button>
-          </div>
-
-          {tab === 'benefit' ? (
-            enabled ? (
-              <>
-                {done && (
-                  <div className="done-banner">
-                    {done.reward ? `🎉 보상 쿠폰이 도착했어요 · ${done.reward}` : `스탬프 ${done.count}개 적립 완료!`}
-                  </div>
-                )}
-                <StampCard name={info.name} total={total} current={current} pending={pendingCount} rewards={rewards}
-                  notes={info.stamp.notes} dailyLabel={`하루 최대 ${policy.daily}회`} busy={busy}
-                  onAdd={() => { setPinErr(''); setSheet('pin'); }} />
-                <RewardList rewards={rewards} current={shownCount} />
-              </>
-            ) : <p className="sub">이 매장은 현재 스탬프 적립을 하지 않아요.</p>
-          ) : (
-            <div className="card"><div className="irow"><span>주소</span><b>{info.address || '정보 없음'}</b></div></div>
-          )}
+          {enabled ? (
+            <>
+              {done && (
+                <div className="done-banner">
+                  {done.reward ? `🎉 보상 쿠폰이 도착했어요 · ${done.reward}` : `스탬프 ${done.count}개 적립 완료!`}
+                </div>
+              )}
+              <StampCard name={info.name} total={total} current={current} pending={pendingCount} rewards={rewards}
+                notes={info.stamp.notes} dailyLabel={`하루 최대 ${policy.daily}회`} busy={busy}
+                onAdd={() => { setPinErr(''); setSheet('pin'); }} />
+              <RewardList rewards={rewards} current={shownCount} />
+            </>
+          ) : <p className="sub">이 매장은 현재 스탬프 적립을 하지 않아요.</p>}
           <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 스탬프가 복구돼요.</p>
+          <a className="open-app" href={appLink(id)}>앱에서 열기</a>
         </div>
       </div>
 
