@@ -40,3 +40,25 @@ export const addStamp = (body: { restaurant_id: number; pin: string; count: numb
 
 export const getMyStamps = (restaurantId: number | string) =>
   request<any>(`/api/coupons/stamps/my/?restaurant_id=${restaurantId}`, {}, true).then(r => r.data);
+
+export interface IssuedCoupon {
+  code: string;
+  expires_at?: string;
+  benefit?: { title?: string; subtitle?: string; [k: string]: any };
+  coupon_type_title?: string;
+}
+export interface QrVisitResponse {
+  ok: boolean;
+  credited?: boolean;
+  coupon_issued: boolean;
+  coupons: IssuedCoupon[];
+  entry?: { branch?: string; coupon_code?: string | null } | null;
+}
+
+// QR 방문(앱의 QR 딥링크와 같은 API): 그 달 첫 방문이면 이 매장 쿠폰 1장 발급 + 방문 마일리지
+export const qrVisit = (restaurantId: number, idemKey: string) =>
+  request<QrVisitResponse>(
+    '/api/mileage/qr-visit/',
+    { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, source: 'qr' }), headers: { 'Idempotency-Key': idemKey } },
+    true,
+  ).then(r => r.data);

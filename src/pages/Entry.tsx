@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
-import { addStamp, getMyStamps, getRestaurant, type RestaurantEntry } from '../api/endpoints';
+import { addStamp, getMyStamps, getRestaurant, qrVisit, type IssuedCoupon, type RestaurantEntry } from '../api/endpoints';
 import { useAuth, kakaoAuthUrl } from '../auth/AuthContext';
 import { CtaBar, Loading, Notice, Page } from '../components/Layout';
 import { InstallSheet } from '../components/InstallSheet';
 import { PinSheet } from '../components/PinSheet';
 import { RewardList, StampCard } from '../components/StampCard';
+import { CouponCard } from '../components/CouponCard';
 import { usePolicy } from '../hooks/usePolicy';
 import { track } from '../lib/analytics';
 import { isMobile, openApp, storeUrl } from '../lib/platform';
 import { session, store } from '../lib/storage';
-import { pending as pendingStore, type Pending } from '../lib/pending';
+import { claim, pending as pendingStore, type Pending } from '../lib/pending';
 import { boardLength, rewardText } from '../lib/stamp';
 
 function currentOf(d: any): number {
@@ -36,6 +37,10 @@ export default function Entry() {
   const [done, setDone] = useState<{ count: number; reward: string | null } | null>(null);
   const [openTried, setOpenTried] = useState(false);
   const autoRan = useRef(false);
+  const claimRan = useRef(false);
+  // 스탬프 없는 매장: 로그인하면 바로 받는 쿠폰
+  const [claimed, setClaimed] = useState<{ issued: boolean; coupons: IssuedCoupon[] } | null>(null);
+  const [claimErr, setClaimErr] = useState('');
 
   useEffect(() => {
     const src = sp.get('src');
@@ -80,6 +85,30 @@ export default function Entry() {
     submit(pend);
   }, [loggedIn, info, pend, submit]);
 
+  const claimCoupon = useCallback(async () => {
+    if (!info) return;
+    setBusy(true); setClaimErr('');
+    try {
+      const key = session.get(`qr_key_${id}`) ?? crypto.randomUUID();
+      session.set(`qr_key_${id}`, key);
+      const r = await qrVisit(info.restaurant_id, key);
+      claim.clear(); session.remove(`qr_key_${id}`);
+      track('web_stamp_add', { restaurant_id: id, kind: 'qr_coupon', issued: r.coupon_issued });
+      setClaimed({ issued: !!r.coupon_issued, coupons: r.coupons ?? [] });
+      setTimeout(() => setSheet('install'), 1400);
+    } catch (e) {
+      claim.clear();
+      setClaimErr((e as ApiError).message || '쿠폰을 받지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally { setBusy(false); }
+  }, [info, id]);
+
+  // 로그인하고 돌아왔으면 이어서 쿠폰 받기
+  useEffect(() => {
+    if (!loggedIn || !info || info.stamp.enabled || claimRan.current || claim.get() !== id) return;
+    claimRan.current = true;
+    claimCoupon();
+  }, [loggedIn, info, id, claimCoupon]);
+
   if (!isMobile() && !import.meta.env.DEV)
     return <Notice title="휴대폰으로 QR을 다시 찍어 주세요" desc="이 페이지는 모바일에서 이용할 수 있어요." />;
   if (error === 404) return <Notice title="제휴 매장이 아니에요" desc="우주라이크 스탬프를 지원하지 않는 매장이에요." />;
@@ -99,6 +128,11 @@ export default function Entry() {
   };
   const goKakao = () => { track('web_login', { stage: 'start' }); location.href = kakaoAuthUrl(`/s/${id}`); };
   const cancelPending = () => { pendingStore.clear(); setPend(null); };
+  const couponItems = info.install_bonus_items ?? [];
+  const goKakaoForCoupon = () => { claim.set(id); goKakao(); };
+  const receivedItems = (claimed?.coupons ?? []).map(c => ({
+    title: c.benefit?.title || c.coupon_type_title || '쿠폰', subtitle: c.benefit?.subtitle || '',
+  }));
 
   return (
     <Page>
@@ -120,8 +154,21 @@ export default function Entry() {
                 onAdd={() => { setPinErr(''); setSheet('pin'); }} />
               <RewardList rewards={rewards} current={shownCount} />
             </>
-          ) : <p className="sub">이 매장은 현재 스탬프 적립을 하지 않아요.</p>}
-          <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 스탬프가 복구돼요.</p>
+          ) : (
+            <>
+              {claimed?.issued && <div className="done-banner">🎉 쿠폰이 도착했어요! 오늘 23:59까지 앱에서 쓸 수 있어요</div>}
+              {claimed && !claimed.issued && (
+                <div className="done-banner">이번에는 쿠폰이 새로 발급되지 않았어요. 이번 달에 이미 받으셨다면 앱 쿠폰함에서 확인해 주세요 (매달 첫 방문에 1장)</div>
+              )}
+              {claimErr && <p className="err" role="alert">{claimErr}</p>}
+              {couponItems.length > 0 ? (
+                <CouponCard items={claimed?.issued && receivedItems.length ? receivedItems : couponItems}
+                  heading={claimed?.issued ? '받은 쿠폰' : '첫 방문 쿠폰'}
+                  hint={claimed ? undefined : '카카오로 로그인하면 바로 받을 수 있어요. 쿠폰은 앱에서 사용해요.'} />
+              ) : <p className="sub">이 매장은 현재 받을 수 있는 쿠폰이 없어요.</p>}
+            </>
+          )}
+          <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 {enabled ? '스탬프가' : '쿠폰이'} 복구돼요.</p>
           <button className="open-app" onClick={() => {
             track('web_install_click', { restaurant_id: id, from: 'open_app' });
             if (!openApp(id)) alert('휴대폰에서 열어 주세요.');
@@ -140,6 +187,16 @@ export default function Entry() {
           <button className="btn ghost" style={{ minHeight: 40 }} onClick={cancelPending}>취소</button>
         </CtaBar>
       )}
+      {!enabled && couponItems.length > 0 && !claimed && (
+        <CtaBar>
+          {loggedIn
+            ? <button className="btn" disabled={busy} onClick={claimCoupon}>{busy ? '받는 중…' : '쿠폰 받기'}</button>
+            : <button className="btn kakao" onClick={goKakaoForCoupon}>카카오 로그인하고 쿠폰 받기</button>}
+        </CtaBar>
+      )}
+      {!enabled && claimed && sheet !== 'install' && (
+        <CtaBar><button className="btn" onClick={() => setSheet('install')}>앱에서 쿠폰 쓰기</button></CtaBar>
+      )}
       {done && sheet !== 'install' && (
         <CtaBar><button className="btn" onClick={() => setSheet('install')}>앱에서 이어서 보기</button></CtaBar>
       )}
@@ -148,7 +205,7 @@ export default function Entry() {
         <PinSheet pinLen={policy.pinLen} maxCount={policy.maxPerScan} error={pinErr} shake={shake} busy={busy}
           onSubmit={onPin} onClose={() => setSheet(null)} />
       )}
-      {sheet === 'install' && <InstallSheet info={info} stampCount={current} onClose={() => setSheet(null)} />}
+      {sheet === 'install' && <InstallSheet info={info} stampCount={current} received={claimed?.issued ? receivedItems : undefined} onClose={() => setSheet(null)} />}
     </Page>
   );
 }

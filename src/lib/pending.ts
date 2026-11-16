@@ -13,3 +13,11 @@ export const pending = {
   set(p: Pending) { session.set(K, JSON.stringify(p)); },
   clear() { session.remove(K); },
 };
+
+// 쿠폰 받기: 스탬프 없는 매장에서 로그인 직전에 표시해 두고, 로그인 후 돌아오면 자동으로 받는다.
+const CK = 'wu_claim';
+export const claim = {
+  get(): string | null { return session.get(CK); },
+  set(id: string) { session.set(CK, id); },
+  clear() { session.remove(CK); },
+};
