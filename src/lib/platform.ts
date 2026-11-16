@@ -34,20 +34,11 @@ export const androidIntent = (id: string | number) => {
 /**
  * 앱 열기. 버튼 탭(사용자 동작) 안에서 호출해야 브라우저가 막지 않는다.
  *  - Android: intent:// (앱 없으면 Play 스토어)
- *  - iOS: 커스텀 스킴으로 열고, 화면이 그대로면 잠시 뒤 App Store
+ *  - iOS: 커스텀 스킴으로 연다. 앱이 없으면 iOS가 오류 알림만 띄우므로 호출한 쪽이 설치 링크를 보여 준다
  *  - 그 외(PC 등): 아무것도 하지 않고 false
  */
 export function openApp(id: string | number): boolean {
   if (isAndroid()) { location.href = androidIntent(id); return true; }
-  if (isIOS()) {
-    let left = false;
-    const mark = () => { left = true; };
-    document.addEventListener('visibilitychange', () => { if (document.hidden) mark(); });
-    window.addEventListener('pagehide', mark);
-    window.addEventListener('blur', mark);
-    location.href = appLink(id);
-    setTimeout(() => { if (!left && !document.hidden) location.href = IOS_STORE; }, 1500);
-    return true;
-  }
+  if (isIOS()) { location.href = appLink(id); return true; }
   return false;
 }

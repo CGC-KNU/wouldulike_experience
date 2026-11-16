@@ -9,7 +9,7 @@ import { PinSheet } from '../components/PinSheet';
 import { RewardList, StampCard } from '../components/StampCard';
 import { usePolicy } from '../hooks/usePolicy';
 import { track } from '../lib/analytics';
-import { isMobile, openApp } from '../lib/platform';
+import { isMobile, openApp, storeUrl } from '../lib/platform';
 import { session, store } from '../lib/storage';
 import { pending as pendingStore, type Pending } from '../lib/pending';
 import { boardLength, rewardText } from '../lib/stamp';
@@ -34,6 +34,7 @@ export default function Entry() {
   const [pinErr, setPinErr] = useState('');
   const [shake, setShake] = useState(false);
   const [done, setDone] = useState<{ count: number; reward: string | null } | null>(null);
+  const [openTried, setOpenTried] = useState(false);
   const autoRan = useRef(false);
 
   useEffect(() => {
@@ -121,7 +122,14 @@ export default function Entry() {
             </>
           ) : <p className="sub">이 매장은 현재 스탬프 적립을 하지 않아요.</p>}
           <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 스탬프가 복구돼요.</p>
-          <button className="open-app" onClick={() => { track('web_install_click', { restaurant_id: id, from: 'open_app' }); if (!openApp(id)) alert('휴대폰에서 열어 주세요.'); }}>앱에서 열기</button>
+          <button className="open-app" onClick={() => {
+            track('web_install_click', { restaurant_id: id, from: 'open_app' });
+            if (!openApp(id)) alert('휴대폰에서 열어 주세요.');
+            else setTimeout(() => setOpenTried(true), 1500);
+          }}>앱에서 열기</button>
+          {openTried && storeUrl() && (
+            <p className="note">앱이 열리지 않나요? <a className="link" href={storeUrl()!}>앱 설치하기</a><br />설치 후 같은 QR을 다시 찍어 주세요.</p>
+          )}
         </div>
       </div>
 
