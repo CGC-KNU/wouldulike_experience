@@ -97,5 +97,5 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic 
 .pad button{min-height:48px}
 .pin i{width:46px;height:54px}
 .sc-add{margin-top:16px;min-height:56px;font-size:17px}
-.open-app{display:flex;align-items:center;justify-content:center;min-height:48px;margin:8px 0 0;border:1px solid #E9EBF0;border-radius:14px;background:#fff;color:#4B5563;font-size:14px;font-weight:700;text-decoration:none}
+.open-app{width:100%;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;min-height:48px;margin:8px 0 0;border:1px solid #E9EBF0;border-radius:14px;background:#fff;color:#4B5563;font-size:14px;font-weight:700;text-decoration:none}
 .d-body .stamp-card{margin-top:18px}

@@ -19,9 +19,9 @@ export function StampGrid({ total, current, pending = 0, rewardSteps }: {
   );
 }
 
-export function StampCard({ name, total, current, pending, rewards, notes, dailyLabel, onAdd, busy }: {
+export function StampCard({ name, total, current, pending, rewards, notes, onAdd, busy }: {
   name: string; total: number; current: number; pending: number; rewards: Reward[]; notes?: string;
-  dailyLabel: string; onAdd: () => void; busy: boolean;
+  onAdd: () => void; busy: boolean;
 }) {
   const shown = current + pending;
   const remaining = remainingToNext(total, rewards, shown);
@@ -54,7 +54,7 @@ export function StampCard({ name, total, current, pending, rewards, notes, daily
       </div>
       <div className="sc-note">
         <img src="/stamp/stamp_info.png" width={20} height={20} alt="" />
-        <span>{notes?.trim() ? notes : `${dailyLabel} 적립 · 마지막 칸이 리워드예요`}</span>
+        <span>{notes?.trim() ? notes : '마지막 칸이 리워드예요'}</span>
       </div>
     </section>
   );

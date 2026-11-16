@@ -9,7 +9,7 @@ import { PinSheet } from '../components/PinSheet';
 import { RewardList, StampCard } from '../components/StampCard';
 import { usePolicy } from '../hooks/usePolicy';
 import { track } from '../lib/analytics';
-import { appLink, isMobile } from '../lib/platform';
+import { isMobile, openApp } from '../lib/platform';
 import { session, store } from '../lib/storage';
 import { pending as pendingStore, type Pending } from '../lib/pending';
 import { boardLength, rewardText } from '../lib/stamp';
@@ -115,13 +115,13 @@ export default function Entry() {
                 </div>
               )}
               <StampCard name={info.name} total={total} current={current} pending={pendingCount} rewards={rewards}
-                notes={info.stamp.notes} dailyLabel={`하루 최대 ${policy.daily}회`} busy={busy}
+                notes={info.stamp.notes} busy={busy}
                 onAdd={() => { setPinErr(''); setSheet('pin'); }} />
               <RewardList rewards={rewards} current={shownCount} />
             </>
           ) : <p className="sub">이 매장은 현재 스탬프 적립을 하지 않아요.</p>}
           <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 스탬프가 복구돼요.</p>
-          <a className="open-app" href={appLink(id)}>앱에서 열기</a>
+          <button className="open-app" onClick={() => { track('web_install_click', { restaurant_id: id, from: 'open_app' }); if (!openApp(id)) alert('휴대폰에서 열어 주세요.'); }}>앱에서 열기</button>
         </div>
       </div>
 
