@@ -148,7 +148,7 @@ export default function Entry() {
         <PinSheet pinLen={policy.pinLen} maxCount={policy.maxPerScan} error={pinErr} shake={shake} busy={busy}
           onSubmit={onPin} onClose={() => setSheet(null)} />
       )}
-      {sheet === 'install' && <InstallSheet info={info} onClose={() => setSheet(null)} />}
+      {sheet === 'install' && <InstallSheet info={info} stampCount={current} onClose={() => setSheet(null)} />}
     </Page>
   );
 }
