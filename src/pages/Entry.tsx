@@ -20,6 +20,17 @@ function currentOf(d: any): number {
   return typeof v === 'number' ? v : 0;
 }
 
+// 쿠폰 유효기간 문구. 프로모션 쿠폰은 그 주 끝, 평소 QR 쿠폰은 받은 날 23:59.
+function untilText(iso?: string): string {
+  if (!iso) return '오늘 23:59까지';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '오늘 23:59까지';
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d).map(x => [x.type, x.value]));
+  return `${p.month}/${p.day} ${p.hour === '24' ? '00' : p.hour}:${p.minute}까지`;
+}
+
 export default function Entry() {
   const { id = '' } = useParams();
   const [sp] = useSearchParams();
@@ -104,7 +115,8 @@ export default function Entry() {
 
   // 로그인하고 돌아왔으면 이어서 쿠폰 받기
   useEffect(() => {
-    if (!loggedIn || !info || info.stamp.enabled || claimRan.current || claim.get() !== id) return;
+    // 쿠폰 받기를 보여 주는 매장: 스탬프가 없거나, 프로모션 매장
+    if (!loggedIn || !info || (info.stamp.enabled && !info.promo?.active) || claimRan.current || claim.get() !== id) return;
     claimRan.current = true;
     claimCoupon();
   }, [loggedIn, info, id, claimCoupon]);
@@ -128,11 +140,34 @@ export default function Entry() {
   };
   const goKakao = () => { track('web_login', { stage: 'start' }); location.href = kakaoAuthUrl(`/s/${id}`); };
   const cancelPending = () => { pendingStore.clear(); setPend(null); };
-  const couponItems = info.install_bonus_items ?? [];
+  // 프로모션 매장이면 이번 주 쿠폰을 보여 주고(스탬프 매장 포함), 아니면 예전 그대로
+  const promoItems = info.promo?.active ? info.promo.items : [];
+  const promo = promoItems.length > 0;
+  const couponStore = !enabled || promo;
+  const couponItems = promo ? promoItems : (info.install_bonus_items ?? []);
   const goKakaoForCoupon = () => { claim.set(id); goKakao(); };
   const receivedItems = (claimed?.coupons ?? []).map(c => ({
     title: c.benefit?.title || c.coupon_type_title || '쿠폰', subtitle: c.benefit?.subtitle || '',
   }));
+
+  const couponBlock = (
+    <>
+      {claimed?.issued && <div className="done-banner">🎉 쿠폰이 도착했어요! {untilText(claimed.coupons[0]?.expires_at)} 앱에서 쓸 수 있어요</div>}
+      {claimed && !claimed.issued && (
+        <div className="done-banner">
+          {promo
+            ? '이번 주 쿠폰은 이미 받으셨어요. 앱 쿠폰함에서 확인해 주세요 (매장마다 한 주에 1장)'
+            : '이번에는 쿠폰이 새로 발급되지 않았어요. 이번 달에 이미 받으셨다면 앱 쿠폰함에서 확인해 주세요 (매달 첫 방문에 1장)'}
+        </div>
+      )}
+      {claimErr && <p className="err" role="alert">{claimErr}</p>}
+      {couponItems.length > 0 ? (
+        <CouponCard items={claimed?.issued && receivedItems.length ? receivedItems : couponItems}
+          heading={claimed?.issued ? '받은 쿠폰' : promo ? '이번 주 프로모션 쿠폰' : '첫 방문 쿠폰'}
+          hint={claimed ? undefined : '카카오로 로그인하면 바로 받을 수 있어요. 쿠폰은 앱에서 사용해요.'} />
+      ) : <p className="sub">이 매장은 현재 받을 수 있는 쿠폰이 없어요.</p>}
+    </>
+  );
 
   return (
     <Page>
@@ -144,6 +179,7 @@ export default function Entry() {
           {info.address && <p className="d-meta">{info.address}</p>}
           {enabled ? (
             <>
+              {promo && couponBlock}
               {done && (
                 <div className="done-banner">
                   {done.reward ? `🎉 보상 쿠폰이 도착했어요 · ${done.reward}` : `스탬프 ${done.count}개 적립 완료!`}
@@ -155,18 +191,7 @@ export default function Entry() {
               <RewardList rewards={rewards} current={shownCount} />
             </>
           ) : (
-            <>
-              {claimed?.issued && <div className="done-banner">🎉 쿠폰이 도착했어요! 오늘 23:59까지 앱에서 쓸 수 있어요</div>}
-              {claimed && !claimed.issued && (
-                <div className="done-banner">이번에는 쿠폰이 새로 발급되지 않았어요. 이번 달에 이미 받으셨다면 앱 쿠폰함에서 확인해 주세요 (매달 첫 방문에 1장)</div>
-              )}
-              {claimErr && <p className="err" role="alert">{claimErr}</p>}
-              {couponItems.length > 0 ? (
-                <CouponCard items={claimed?.issued && receivedItems.length ? receivedItems : couponItems}
-                  heading={claimed?.issued ? '받은 쿠폰' : '첫 방문 쿠폰'}
-                  hint={claimed ? undefined : '카카오로 로그인하면 바로 받을 수 있어요. 쿠폰은 앱에서 사용해요.'} />
-              ) : <p className="sub">이 매장은 현재 받을 수 있는 쿠폰이 없어요.</p>}
-            </>
+            couponBlock
           )}
           <p className="note">로그인 정보가 지워져도 카카오로 다시 로그인하면 같은 계정으로 {enabled ? '스탬프가' : '쿠폰이'} 복구돼요.</p>
           <button className="open-app" onClick={() => {
@@ -187,14 +212,14 @@ export default function Entry() {
           <button className="btn ghost" style={{ minHeight: 40 }} onClick={cancelPending}>취소</button>
         </CtaBar>
       )}
-      {!enabled && couponItems.length > 0 && !claimed && (
+      {couponStore && couponItems.length > 0 && !claimed && !(!loggedIn && pend) && (
         <CtaBar>
           {loggedIn
             ? <button className="btn" disabled={busy} onClick={claimCoupon}>{busy ? '받는 중…' : '쿠폰 받기'}</button>
             : <button className="btn kakao" onClick={goKakaoForCoupon}>카카오 로그인하고 쿠폰 받기</button>}
         </CtaBar>
       )}
-      {!enabled && claimed && sheet !== 'install' && (
+      {couponStore && claimed && !done && sheet !== 'install' && (
         <CtaBar><button className="btn" onClick={() => setSheet('install')}>앱에서 쿠폰 쓰기</button></CtaBar>
       )}
       {done && sheet !== 'install' && (
