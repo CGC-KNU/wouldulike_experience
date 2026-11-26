@@ -11,7 +11,7 @@ export interface RestaurantEntry {
   install_bonus_coupon: boolean;
   install_bonus_items?: { title: string; subtitle?: string }[];
   // 계명대 프로모션(11/26~12/9): 대상 매장이면 이번 주 쿠폰. 스탬프 매장에서도 쿠폰 받기를 보여 준다.
-  promo?: { active: boolean; week?: string; items: { title: string; subtitle?: string }[]; ends_at?: string } | null;
+  promo?: { active: boolean; mode?: 'app_open'; week?: string; items: { title: string; subtitle?: string }[]; ends_at?: string } | null;
 }
 export interface LoginResponse { token: Tokens; user: { id: number; nickname?: string }; is_new?: boolean }
 export interface Policy {

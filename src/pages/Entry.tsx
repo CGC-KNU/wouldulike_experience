@@ -119,7 +119,7 @@ export default function Entry() {
   // 로그인하고 돌아왔으면 이어서 쿠폰 받기
   useEffect(() => {
     // 쿠폰 받기를 보여 주는 매장: 스탬프가 없거나, 프로모션 매장
-    if (!loggedIn || !info || (info.stamp.enabled && !info.promo?.active) || claimRan.current || claim.get() !== id) return;
+    if (!loggedIn || !info || (info.stamp.enabled && !(info.promo?.active && !info.promo.mode)) || claimRan.current || claim.get() !== id) return;
     claimRan.current = true;
     claimCoupon();
   }, [loggedIn, info, id, claimCoupon]);
@@ -144,7 +144,9 @@ export default function Entry() {
   const goKakao = () => { track('web_login', { stage: 'start' }); location.href = kakaoAuthUrl(`/s/${id}`); };
   const cancelPending = () => { pendingStore.clear(); setPend(null); };
   // 프로모션 매장이면 이번 주 쿠폰을 보여 주고(스탬프 매장 포함), 아니면 예전 그대로
-  const promoItems = info.promo?.active ? info.promo.items : [];
+  // 군침처럼 앱 접속으로 받는 쿠폰(mode=app_open)은 웹에서 받지 않고 안내만 한다.
+  const appOpen = !!info.promo?.active && info.promo.mode === 'app_open' && info.promo.items.length > 0;
+  const promoItems = info.promo?.active && !appOpen ? info.promo.items : [];
   const promo = promoItems.length > 0;
   const couponStore = !enabled || promo;
   const couponItems = promo ? promoItems : (info.install_bonus_items ?? []);
@@ -179,7 +181,7 @@ export default function Entry() {
       <div className="detail">
         {/* 매장 사진은 쓰지 않는다 — 이름·주소만 있는 헤더 */}
         <header className="d-head">
-          {promo && <span className="d-tag">🎁 계명대 프로모션</span>}
+          {(promo || appOpen) && <span className="d-tag">🎁 계명대 프로모션</span>}
           <h1 className="d-name">{info.name}</h1>
           {info.address && <p className="d-meta">{info.address}</p>}
           {enabled && <span className="pill">스탬프 {Math.min(shownCount, total)}/{total}</span>}
@@ -188,6 +190,10 @@ export default function Entry() {
           {enabled ? (
             <>
               {promo && couponBlock}
+              {appOpen && (
+                <CouponCard items={info.promo!.items} heading="계명대 앱 접속 쿠폰"
+                  hint={['계명대 학생이라면', '앱에 접속하면 자동으로 받아요']} />
+              )}
               {done && (done.reward
                 ? <Banner icon="🎉" tone="ok" title="보상 쿠폰이 도착했어요" sub={done.reward} />
                 : <Banner icon="✅" tone="ok" title={`스탬프 ${done.count}개 적립 완료!`} />)}
@@ -223,6 +229,13 @@ export default function Entry() {
           {loggedIn
             ? <button className={`btn gift${busy ? ' busy' : ''}`} disabled={busy} onClick={claimCoupon}><span className="gi" aria-hidden="true">🎁</span>{busy ? '받는 중…' : '쿠폰 받기'}</button>
             : <button className="btn kakao" onClick={goKakaoForCoupon}>카카오 로그인하고 쿠폰 받기</button>}
+        </CtaBar>
+      )}
+      {appOpen && !done && sheet !== 'install' && !(!loggedIn && pend) && (
+        <CtaBar>
+          <button className="btn gift" onClick={() => { track('web_install_click', { restaurant_id: id, from: 'app_open_coupon' }); setSheet('install'); }}>
+            <span className="gi" aria-hidden="true">🎁</span>앱 설치하고 쿠폰 받기
+          </button>
         </CtaBar>
       )}
       {couponStore && claimed && !done && sheet !== 'install' && !burst && (
